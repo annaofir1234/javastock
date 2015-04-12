@@ -6,12 +6,22 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 	<servlet>
 		<servlet-name>Javastock</servlet-name>
-		<servlet-class>com.schaffer.JavastockServlet</servlet-class>
+		<servlet-class>com.schaffer.JavaStockServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>Javastock</servlet-name>
 		<url-pattern>/javastock</url-pattern>
 	</servlet-mapping>
+	
+		<servlet>
+		<servlet-name>Exercise03</servlet-name>
+		<servlet-class>com.schaffer.Exercise03</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Exercise03</servlet-name>
+		<url-pattern>/Exercise03</url-pattern>
+	</servlet-mapping>
+	
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
