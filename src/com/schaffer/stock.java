@@ -6,6 +6,13 @@ import java.text.SimpleDateFormat;
 
 public class stock {
 	
+	private int recomendation;
+	private int stockQuantity;
+	private final static int BUY = 0;
+	private final static int SELL = 1;
+	private final static int REMOVE= 2;
+	private final static int HOLD= 3;
+	
 	private String symbol;
 	private float ask;
 	private float bid;
@@ -55,4 +62,6 @@ public class stock {
 		
 		return stock;
 	}
+	
+		
 }
