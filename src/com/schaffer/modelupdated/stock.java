@@ -17,20 +17,7 @@ public class stock {
 	private float ask;
 	private float bid;
 	private Date date;
-	
-	public stock ( String newsymbol, Float newask , Float newbid , java.util.Date newdate){
-		this.setSymbol(symbol);
-		this.setBid( bid);
-		this.setAsk(ask);
-		this.setDate(date);
-	}
-	 
-	 public stock (stock stock){
-		 this.setSymbol(stock.getSymbol());
-		 this.setBid(stock. getBid());
-		 this.setAsk(stock.getAsk());
-		 this.setDate(stock.getDate()); 
-	 }
+
 	 
 	// Getters & Setters
 	public String getSymbol() {
@@ -70,14 +57,27 @@ public class stock {
 	public void setStockQuantity(int stockQuantity) {
 		this.stockQuantity = stockQuantity;	}
 	
-		
+	//Constructor
+	public stock ( String newsymbol, Float newask , Float newbid , java.util.Date newdate){
+		this.setSymbol(newsymbol);
+		this.setBid(newbid);
+		this.setAsk(newask);
+		this.setDate(newdate);
+	}
+	 
+	//Copy constructor
+	 public stock (stock stock){
+	 this(new String(stock.getSymbol()), stock.getAsk(), stock.getBid(),
+			 new Date(stock.getDate().getTime()));
+	 }
+	 
 	public String getHtmlDescription (){
 		
 		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 		String date = df.format(getDate());
 		
 		String stock = new String ( "<b>Symbol</b>: " + this.getSymbol() + "  <b>Ask</b>: " +
-				this.getAsk() + "  <b>Bid</b>: " + this.getBid() + "  <b>Date</b>: " + this.date);
+				this.getAsk() + "  <b>Bid</b>: " + this.getBid() + "  <b>Date</b>: " + date);
 		
 		return stock;
 	}

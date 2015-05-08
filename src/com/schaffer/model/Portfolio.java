@@ -1,7 +1,6 @@
 package com.schaffer.model;
 
 import com.schaffer.modelupdated.stock;
-import java.util.Date;
 
 public class Portfolio {
 	
@@ -9,26 +8,6 @@ public class Portfolio {
 		String title;
 		private stock[] stocks;
 		int portfolioSize = 0;
-		
-		//Constructor
-	 	public Portfolio(String title){
-		stocks= new stock[MAX_PORTFOLIO_SIZE];
-		
-			this.stocks= new stock[MAX_PORTFOLIO_SIZE];
-	 		this.title= title;
-	 		this.portfolioSize=0;
-	 	}
-		
-	 	//copy constructor
-		public Portfolio(Portfolio portfolio){
-		
-			this(portfolio.getTitle());
-			setPortfolioSize(portfolio.getPortfolioSize());
-				
-			for(int i=0; i<this.portfolioSize; i++){
-					stocks[i]= new stock(portfolio.getStock()[i]);		
-			}		
-		}
 		
 		//getters and Setters
 		public String getTitle() {
@@ -54,7 +33,27 @@ public class Portfolio {
 		public void setPortfolioSize(int portfolioSize) {
 				this.portfolioSize = portfolioSize;
 		}
-				
+		
+		//Constructor
+	 	public Portfolio(String title){
+		
+			this.stocks= new stock[MAX_PORTFOLIO_SIZE];
+	 		this.title= title;
+	 		this.portfolioSize=0;
+	 	}
+		
+	 	//copy constructor
+		public Portfolio(Portfolio portfolio){
+		
+			setTitle(portfolio.getTitle());
+			setPortfolioSize(portfolio.getPortfolioSize());
+			this.stocks= new stock[MAX_PORTFOLIO_SIZE];
+			
+			for(int i=0; i<this.portfolioSize; i++){
+					this.stocks[i]= new stock(portfolio.getStock()[i]);		
+			}		
+		}
+		
 		public void addStock(stock stk) {
 			
 			if(stk != null && this.portfolioSize < MAX_PORTFOLIO_SIZE) {
@@ -79,19 +78,23 @@ public class Portfolio {
 				return str;
 		}	
 		 
-		 public void removeStock(stock stock)
-		 {
-		 	for(int i=0; i < portfolioSize; i++)
-		 	{
-		 		if(this.stocks[i].getSymbol().equals(stock.getSymbol()))
-	            {	
-					if(i != portfolioSize-1 && portfolioSize > 1)
-						for(int j = i; j < portfolioSize-1; j++)
-		 				{
-								this.stocks[j] = new stock(this.stocks[j+1]);
-		 				}
-					}
-				}
-		 	this.portfolioSize--;
-		}	
+		 public void removeStock(String symbol) {
+			  if (portfolioSize == 1 || symbol.equals(stocks[portfolioSize-1].getSymbol())){
+				  stocks[portfolioSize-1] = null;
+				  portfolioSize--;
+				  return;
+			  }
+			  for (int i = 0; i < portfolioSize; i++){
+				  if (symbol == null){
+				return;
+			   }
+			   else if (symbol.equals(stocks[i].getSymbol()))
+			   {
+			    stocks[i] = stocks[portfolioSize - 1];
+			    stocks[portfolioSize - 1] =null;
+			    portfolioSize--;
+			   }
+			  }
+			  return;
+			 }
 }
