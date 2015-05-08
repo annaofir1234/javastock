@@ -1,17 +1,19 @@
 package com.schaffer.service;
 
-	import java.util.Calendar;
-	import java.util.Date;
+import java.util.Calendar;
+import java.util.Date;
+import java.io.IOException;
 
-	import java.io.IOException;
-	import com.schaffer.stock;
-	import com.schaffer.model.Portfolio;
-	import com.schaffer.Exercise03;
-	import com.schaffer.JavaStockServlet;
-	import com.schaffer.StockDetailsServlet;
+import com.schaffer.model.Portfolio;
+import com.schaffer.modelupdated.stock;
 
-	public class PortfolioManager {
 
+public class PortfolioManager {
+	
+	public void portfolioManager(){
+		
+	}
+	
 	public Portfolio getPortfolio(){
 			
 		Portfolio myportfolio= new Portfolio("My Portfolio:"+ "<br/>");

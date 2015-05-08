@@ -1,6 +1,5 @@
 package com.schaffer.modelupdated;
 
-import com.schaffer.stock; 
 import java.util.Date;
 
 public class Portfolio {
