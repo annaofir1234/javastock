@@ -1,4 +1,4 @@
-package com.schaffer.modelupdated;
+package com.schaffer.model;
 
 import java.util.Date;
 import java.text.DateFormat;
@@ -6,12 +6,12 @@ import java.text.SimpleDateFormat;
 
 public class stock {
 	
-	private int recomendation=0;
+	public enum ALGO_RECOMMENDATION{
+		BUY, SELL, REMOVE, HOLD
+	}
+	
+	private ALGO_RECOMMENDATION recomendation;
 	private int stockQuantity=0;
-	private final static int BUY = 0;
-	private final static int SELL = 1;
-	private final static int REMOVE= 2;
-	private final static int HOLD= 3;
 	
 	private String symbol;
 	private float ask;
@@ -44,11 +44,10 @@ public class stock {
  	public void setDate(Date date) {
  		this.date = date;
  	}
- 	
-	public int getRecomendation() {
+ 	public ALGO_RECOMMENDATION getRecomendation() {
 		return recomendation;
 	}
-	public void setRecomendation(int recomendation) {
+	public void setRecomendation(ALGO_RECOMMENDATION recomendation) {
 		this.recomendation = recomendation;
 	}
 	public int getStockQuantity() {
@@ -63,12 +62,16 @@ public class stock {
 		this.setBid(newbid);
 		this.setAsk(newask);
 		this.setDate(newdate);
+		this.stockQuantity=0;
+		this.recomendation=ALGO_RECOMMENDATION.HOLD;
 	}
 	 
 	//Copy constructor
 	 public stock (stock stock){
-	 this(new String(stock.getSymbol()), stock.getAsk(), stock.getBid(),
+    	 this(new String(stock.getSymbol()), stock.getAsk(), stock.getBid(),
 			 new Date(stock.getDate().getTime()));
+    	 this.setStockQuantity(stock.getStockQuantity());
+	   	 this.setRecomendation(stock.getRecomendation());
 	 }
 	 
 	public String getHtmlDescription (){
@@ -76,9 +79,10 @@ public class stock {
 		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 		String date = df.format(getDate());
 		
-		String stock = new String ( "<b>Symbol</b>: " + this.getSymbol() + "  <b>Ask</b>: " +
-				this.getAsk() + "  <b>Bid</b>: " + this.getBid() + "  <b>Date</b>: " + date);
+		String stock = new String ("<br/>" + "<b>Symbol</b>: " + this.getSymbol() + "  <b>Ask</b>: " +
+				this.getAsk() + "  <b>Bid</b>: " + this.getBid() + "  <b>Date</b>: " + date + "<br/>");
 		
 		return stock;
 	}
+
 }
