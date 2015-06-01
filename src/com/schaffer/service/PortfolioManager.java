@@ -1,39 +1,312 @@
 package com.schaffer.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.schaffer.model.Portfolio;
 import com.schaffer.model.stock;
+import com.schaffer.model.stock.ALGO_RECOMMENDATION;
+import com.schaffer.servlet.InitServlet;
+import com.schaffer.*;
 
-public class PortfolioManager {
+import org.algo.dto.PortfolioDto;
+import org.algo.dto.PortfolioTotalStatus;
+import org.algo.dto.StockDto;
+import org.algo.exception.PortfolioException;
+import org.algo.exception.SymbolNotFoundInNasdaq;
+import org.algo.model.PortfolioInterface;
+import org.algo.model.StockInterface;
+import org.algo.service.DatastoreService;
+import org.algo.service.MarketService;
+import org.algo.service.PortfolioManagerInterface;
+import org.algo.service.ServiceManager;
+
+ // Class code to demonstrate new PortfolioManager
+
+public class PortfolioManager implements PortfolioManagerInterface {
+
+	public enum ALGO_RECOMMENDATION /*OPERATION*/ {BUY, SELL, REMOVE, HOLD }
 	
-	public Portfolio getPortfolio(){
-			
-		Portfolio myPortfolio= new Portfolio("<h>"+"Exercise 07 Portfolio: "+"<h>");
-		 myPortfolio.setBalance(10000);
-			
-		Calendar c= Calendar.getInstance();
-		c.set(2014, 10, 15);
-			
-		Date date1 = c.getTime();
-		stock stock1= new stock("PIH",(float) 10.0,(float) 8.5,date1);
-		
-		Date date2 = c.getTime();
-		stock stock2= new stock("AAL",(float) 30.0, (float) 25.5, date2);
-		
-		Date date3 = c.getTime();
-		stock stock3= new stock("CAAS",(float) 20.0, (float) 15.5, date3);
-		
-		myPortfolio.buyStock(stock1,20);
-		myPortfolio.buyStock(stock2,30);
-		myPortfolio.buyStock(stock3,40);
-		
-		myPortfolio.sellStock("AAL", -1);
-		
-		myPortfolio.removeStock("CAAS");
-		
-		return myPortfolio;
-	}
-}
 
+	private DatastoreService datastoreService = ServiceManager.datastoreService();
+
+	public PortfolioInterface getPortfolio() {
+		PortfolioDto portfolioDto = datastoreService.getPortfolilo();
+		return fromDto(portfolioDto);
+	}
+
+	 //Update portfolio with stocks
+	 
+	@Override
+	public void update() {
+		StockInterface[] stocks = getPortfolio().getStocks();
+		List<String> symbols = new ArrayList<>(Portfolio.getMaxPortfolioSize());
+		for (StockInterface si : stocks) {
+			symbols.add(si.getSymbol());
+		}
+
+		List<stock> update = new ArrayList<>(Portfolio.getMaxPortfolioSize());
+		List<stock> currentStocksList = new ArrayList<stock>();
+		try {
+			List<StockDto> stocksList = MarketService.getInstance().getStocks(symbols);
+			for (StockDto stockDto : stocksList) {
+				stock stock = fromDto(stockDto);
+				currentStocksList.add(stock);
+			}
+
+			for (stock stock : currentStocksList) {
+				update.add(new stock(stock));
+			}
+
+			datastoreService.saveToDataStore(toDtoList(update));
+
+		} catch (SymbolNotFoundInNasdaq e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+	 // get portfolio totals
+	 
+	@Override
+	public PortfolioTotalStatus[] getPortfolioTotalStatus () {
+
+		Portfolio portfolio = (Portfolio) getPortfolio();
+		Map<Date, Float> map = new HashMap<>();
+
+		//get stock status from db.
+		StockInterface[] stocks = portfolio.getStocks();
+		for (int i = 0; i < stocks.length; i++) {
+			StockInterface stock = stocks[i];
+
+			if(stock != null) {
+				List<StockDto> stockHistory = null;
+				try {
+					stockHistory = datastoreService.getStockHistory(stock.getSymbol(),30);
+				} catch (Exception e) {
+					return null;
+				}
+				for (StockDto stockDto : stockHistory) {
+					stock stockStatus = fromDto(stockDto);
+					float value = stockStatus.getBid()*stockStatus.getStockQuantity();
+
+					Date date = stockStatus.getDate();
+					Float total = map.get(date);
+					if(total == null) {
+						total = value;
+					}else {
+						total += value;
+					}
+
+					map.put(date, value);
+				}
+			}
+		}
+
+		PortfolioTotalStatus[] ret = new PortfolioTotalStatus[map.size()];
+
+		int index = 0;
+		//create dto objects
+		for (Date date : map.keySet()) {
+			ret[index] = new PortfolioTotalStatus(date, map.get(date));
+			index++;
+		}
+
+		//sort by date ascending.
+		Arrays.sort(ret);
+
+		return ret;
+	}
+
+	 // Add stock to portfolio 
+	 
+	@Override
+	public void addStock(String symbol) {
+		Portfolio portfolio = (Portfolio) getPortfolio();
+
+		try {
+			StockDto stockDto = ServiceManager.marketService().getStock(symbol);
+			
+			//get current symbol values from nasdaq.
+			stock stock = fromDto(stockDto);
+			
+			//first thing, add it to portfolio.
+			portfolio.addStock(stock);   
+			//or:
+			//portfolio.addStock(stock);   
+
+			//second thing, save the new stock to the database.
+			datastoreService.saveStock(toDto(portfolio.findStock(symbol)));
+			
+			flush(portfolio);
+		} catch (SymbolNotFoundInNasdaq e) {
+			System.out.println("Stock Not Exists: "+symbol);
+		}
+	}
+
+	
+	 // Buy stock
+	 
+	@Override
+	public void buyStock(String symbol, int quantity) throws PortfolioException{
+		try {
+			Portfolio portfolio = (Portfolio) getPortfolio();
+			
+			stock stock = (stock) portfolio.findStock(symbol);
+			if(stock == null) {
+				stock = fromDto(ServiceManager.marketService().getStock(symbol));				
+			}
+			
+			portfolio.buyStock(stock, quantity);
+			flush(portfolio);
+		}catch (Exception e) {
+			System.out.println("Exception: "+e);
+		}
+	}
+
+	 // update database with new portfolio's data
+	 //@param portfolio
+	 
+	private void flush(Portfolio portfolio) {
+		datastoreService.updatePortfolio(toDto(portfolio));
+	}
+
+	 // fromDto - get stock from Data Transfer Object
+	 //@param stockDto
+	 //@return Stock
+	 
+	private stock fromDto(StockDto stockDto) {
+		stock newStock = new stock();
+
+		newStock.setSymbol(stockDto.getSymbol());
+		newStock.setAsk(stockDto.getAsk());
+		newStock.setBid(stockDto.getBid());
+		newStock.setDate(stockDto.getDate()/*.getTime()*/);
+		newStock.setStockQuantity(stockDto.getQuantity());
+		if(stockDto.getRecommendation() != null) newStock.setRecomendation(com.schaffer.model.stock.ALGO_RECOMMENDATION.valueOf(stockDto.getRecommendation()));//)valueOf(stockDto.getRecommendation()));
+
+		return newStock;
+	}
+
+	 // toDto - covert Stock to Stock DTO
+	 //@param inStock
+	 //@return
+	 
+	private StockDto toDto(StockInterface inStock) {
+		if (inStock == null) {
+			return null;
+		}
+		
+		stock stock = (stock) inStock;
+		return new StockDto(stock.getSymbol(), stock.getAsk(), stock.getBid(), 
+				stock.getDate(), stock.getStockQuantity(), stock.getRecomendation().name());
+	}
+
+	 // toDto - converts Portfolio to Portfolio DTO
+	 //@param portfolio
+	 //@return
+	 
+	private PortfolioDto toDto(Portfolio portfolio) {
+		StockDto[] array = null;
+		StockInterface[] stocks = portfolio.getStocks();
+		if(stocks != null) {
+			array = new StockDto[stocks.length];
+			for (int i = 0; i < stocks.length; i++) {
+				array[i] = toDto(stocks[i]);
+			}
+		}
+		return new PortfolioDto(portfolio.getTitle(), portfolio.getBalance(), array);
+	}
+
+	 // fromDto - converts portfolioDto to Portfolio
+	 //@param dto
+	 //@return portfolio
+	 
+	private Portfolio fromDto(PortfolioDto dto) {
+		StockDto[] stocks = dto.getStocks();
+		Portfolio ret;
+		if(stocks == null) {
+			ret = new Portfolio();			
+		}else {
+			List<stock> stockList = new ArrayList<stock>();
+			for (StockDto stockDto : stocks) {
+				stockList.add(fromDto(stockDto));
+			}
+
+			stock[] stockArray = stockList.toArray(new stock[stockList.size()]);
+			ret = new Portfolio(stockArray);
+		}
+
+		ret.setTitle(dto.getTitle());
+		try {
+			ret.updateBalance(dto.getBalance());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ret;
+	}	
+
+	 // toDtoList - convert List of Stocks to list of Stock DTO
+	 //@param stocks
+	 //@return stockDto
+	 
+	private List<StockDto> toDtoList(List<stock> stocks) {
+
+		List<StockDto> ret = new ArrayList<StockDto>();
+
+		for (stock stockStatus : stocks) {
+			ret.add(toDto((StockInterface) stockStatus));
+		}
+		return ret;
+	}	
+	
+	 // A method that returns a new instance of Portfolio copied from another instance.
+	 //@param portfolio		Portfolio to copy.
+	 //@return a new Portfolio object with the same values as the one given.
+	 
+	public Portfolio duplicatePortfolio(Portfolio portfolio) {
+		Portfolio copyPortfolio = new Portfolio(portfolio);
+		return copyPortfolio;
+	}
+
+	 // Set portfolio title
+	 
+	@Override
+	public void setTitle(String title) {
+		Portfolio portfolio = (Portfolio) getPortfolio();
+		portfolio.setTitle(title);
+		flush(portfolio);
+	}
+	
+	 // Sell stock
+	 
+	@Override
+	public void sellStock(String symbol, int quantity) throws PortfolioException {
+		Portfolio portfolio = (Portfolio) getPortfolio();
+		portfolio.sellStock(symbol, quantity);
+		flush(portfolio);
+	}
+
+	
+	 // Remove stock
+	 
+	@Override
+	public void removeStock(String symbol) { 
+		Portfolio portfolio = (Portfolio) getPortfolio();
+		portfolio.removeStock(symbol);
+		flush(portfolio);
+	}
+
+	 // update portfolio balance
+	 
+	public void updateBalance(float value) { 
+		Portfolio portfolio = (Portfolio) getPortfolio();
+		portfolio.updateBalance(value);
+		flush(portfolio);
+	}
+
+
+}

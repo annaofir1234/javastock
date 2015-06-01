@@ -56,6 +56,15 @@ public class stock {
 	public void setStockQuantity(int stockQuantity) {
 		this.stockQuantity = stockQuantity;	}
 	
+	public stock(){
+		this.symbol=new String();
+		this.ask=0;
+		this.bid=0;
+		this.date= new Date();
+		this.recomendation= ALGO_RECOMMENDATION.HOLD;
+		this.stockQuantity=0;
+	}
+	
 	//Constructor
 	public stock ( String newsymbol, Float newask , Float newbid , java.util.Date newdate){
 		this.setSymbol(newsymbol);
