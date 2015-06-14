@@ -1,97 +1,129 @@
 package com.schaffer.model;
+import java.text.*;
+import java.util.*;
 
-import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import org.algo.model.StockInterface;
 
-public class stock {
-	
-	public enum ALGO_RECOMMENDATION{
-		BUY, SELL, REMOVE, HOLD
-	}
-	
-	private ALGO_RECOMMENDATION recomendation;
-	private int stockQuantity=0;
-	
+import com.schaffer.model.Portfolio.ALGO_RECOMMENDATION;
+/**
+ * This class represents a Stock of Stocks.
+ * @param symbol
+ * @param bid : buy value
+ * @param ask : sell value
+ * @param date : creation date
+ * @param recommendation : price recommendation
+ * @param stockQuantity : the amount of stocks of that kind
+ * @author אנה
+ */
+public class stock implements StockInterface{
+
+
 	private String symbol;
-	private float ask;
-	private float bid;
+	private float bid, ask;
 	private Date date;
+	private ALGO_RECOMMENDATION recommendation;
+	private int stockQuantity;
+	transient private SimpleDateFormat formDate = new SimpleDateFormat("dd/MM/yyyy");
 
-	 
-	// Getters & Setters
-	public String getSymbol() {
-		return symbol;
+	/* TEMPORARY SITUATION - recommendation and stockQuantity are set to default of 0 
+	   until next exercise or further change by lecturer (orr). */
+
+	/**
+	 * C'tor of stock.
+	 * @author אנה
+	 */
+	public stock (){
+		this.symbol = new String();
+		this.bid = 0;
+		this.ask = 0;
+		this.date = new Date();
+		this.recommendation = ALGO_RECOMMENDATION.HOLD;
+		this.stockQuantity = 0;				
 	}
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
+	/**
+	 * C'tor of Stock.
+	 * @param newSymbol
+	 * 		  : Stock Symbol.
+	 * @param newBid
+	 * 		  : Stock bid value.
+	 * @param newAsk
+	 * 		  : Stock ask value.
+	 * @param date
+	 * 		  : Creation date of the stock.
+	 * @author אנה
+	 */
+	public stock (String newSymbol, float newBid, float newAsk, Date date){
+		this.symbol = newSymbol;
+		this.bid = newBid;
+		this.ask = newAsk;
+		this.date = date;
+		this.recommendation = ALGO_RECOMMENDATION.HOLD;
+		this.stockQuantity = 0;				
 	}
-	public float getAsk() {
-		return ask;
+
+	/**
+	 * Copy C'tor of Stock class.
+	 * @param oldStock
+	 * @author אנה
+	 */
+	public stock (stock oldStock)
+	{
+		// חשוב מאוד לשים לב שבזמן שיצרנו לפני התרגול את האינסטנס
+		//ל״תאריך״ לא יצרנו אינסטנס חדש אלא העתקנו. במצב הנוכחי אנחנו מייצרים אינסטנס חדש
+
+		this(oldStock.getSymbol(),oldStock.getBid(),oldStock.getAsk(),new Date(oldStock.getDate().getTime()));
+		this.recommendation = oldStock.getRecommendation();
+		this.stockQuantity = oldStock.getStockQuantity();
 	}
-	public void setAsk(float ask) {
-		this.ask = ask;
+
+	/**
+	 * Method uses the stock's details.
+	 * @return string with stock's details in HTML code.
+	 */
+	public String getHtmlDescription(){
+		return "<b>Stock symbol: </b>"+this.getSymbol()+" <b>Ask: </b>"+this.getAsk()+"<b> Bid: </b>"+this.getBid()+
+				"<b> Date: </b>"+this.formDate.format(this.getDate())+" <b>Quantity: </b>"+this.getStockQuantity();
 	}
-	public float getBid() {
-		return bid;
+
+	public ALGO_RECOMMENDATION getRecommendation() {
+		return recommendation;
 	}
-	public void setBid(float bid) {
-		this.bid = bid;
-	}
-	public Date getDate() {
- 		return date;
- 	}
- 	public void setDate(Date date) {
- 		this.date = date;
- 	}
- 	public ALGO_RECOMMENDATION getRecomendation() {
-		return recomendation;
-	}
-	public void setRecomendation(ALGO_RECOMMENDATION recomendation) {
-		this.recomendation = recomendation;
-	}
+	//	public void setRecommendation(ALGO_RECOMMENDATION recommendation) {
+	//		this.recommendation = recommendation;
+	//	}
 	public int getStockQuantity() {
 		return stockQuantity;
 	}
 	public void setStockQuantity(int stockQuantity) {
-		this.stockQuantity = stockQuantity;	}
-	
-	public stock(){
-		this.symbol=new String();
-		this.ask=0;
-		this.bid=0;
-		this.date= new Date();
-		this.recomendation= ALGO_RECOMMENDATION.HOLD;
-		this.stockQuantity=0;
+		this.stockQuantity = stockQuantity;
 	}
-	
-	//Constructor
-	public stock ( String newsymbol, Float newask , Float newbid , java.util.Date newdate){
-		this.setSymbol(newsymbol);
-		this.setBid(newbid);
-		this.setAsk(newask);
-		this.setDate(newdate);
-		this.stockQuantity=0;
-		this.recomendation=ALGO_RECOMMENDATION.HOLD;
+	public String getSymbol() {
+		return this.symbol;
 	}
-	 
-	//Copy constructor
-	 public stock (stock stock){
-    	 this(new String(stock.getSymbol()), stock.getAsk(), stock.getBid(),
-			 new Date(stock.getDate().getTime()));
-    	 this.setStockQuantity(stock.getStockQuantity());
-	   	 this.setRecomendation(stock.getRecomendation());
-	 }
-	 
-	public String getHtmlDescription (){
-		
-		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
-		String date = df.format(getDate());
-		
-		String stock = new String ("<br/>" + "<b>Symbol</b>: " + this.getSymbol() + "  <b>Ask</b>: " +
-				this.getAsk() + "  <b>Bid</b>: " + this.getBid() + "  <b>Date</b>: " + date + "<br/>");
-		
-		return stock;
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
+	}
+	public float getBid() {
+		return this.bid;
+	}
+	public void setBid(float bid) {
+		this.bid = bid;
+	}
+	public float getAsk() {
+		return this.ask;
+	}
+	public void setAsk(float ask) {
+		this.ask = ask;
+	}
+	public Date getDate() {
+		return this.date;
+	}
+	public void setDate(Date date) {
+		this.date = date;
+	}
+	public void setRecommendation(ALGO_RECOMMENDATION valueOf) {
+		this.recommendation = valueOf;
+
 	}
 
 }
